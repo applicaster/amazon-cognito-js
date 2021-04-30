@@ -1,38 +1,8 @@
 // Copyright 2014 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-const ZappStorage = require("@applicaster/zapp-react-native-bridge/ZappStorage/LocalStorage");
-
-function isPromise(promise) {
-  return !!promise && typeof promise.then === 'function';
-}
 
 AWS = AWS || {};
 AWS.CognitoSyncManager = AWS.CognitoSyncManager || {};
-
-const parseFallback = "{}";
-const NAMESPACE = "cognito-sync";
-
-window.localStorage = {
-  _data: {},
-  setItem: function (id, val) {
-    const item = ZappStorage.localStorage.setItem(id, val, NAMESPACE);
-    return item;
-  },
-
-  getItem: function (id) {
-    const item = ZappStorage.localStorage.getItem(id, NAMESPACE);
-    return item;
-  },
-
-  removeItem: function (id) {
-    const item = ZappStorage.localStorage.removeItem(id, NAMESPACE);
-    return item;
-  },
-
-  clear: function () {
-    return (this._data = {});
-  },
-};
 
 AWS.CognitoSyncManager.StoreLocalStorage = (function () {
 
@@ -41,6 +11,14 @@ AWS.CognitoSyncManager.StoreLocalStorage = (function () {
    * @prop {window.localStorage} store A reference to the browser's local storage API.
    * @constructor
    */
+  window.localStorage = {
+    _data: {},
+    setItem: function (id, val) { return this._data[id] = val; },
+    getItem: function (id) { return this._data[id]; },
+    removeItem: function (id) { return delete this._data[id]; },
+    clear: function () { return this._data = {}; }
+  };
+
 
   var CognitoSyncStoreLocalStorage = function () {
     this.store = window.localStorage;
@@ -73,16 +51,14 @@ AWS.CognitoSyncManager.StoreLocalStorage = (function () {
       return callback(new Error('You must provide an identity id and dataset name.'), null);
     }
 
-    return this.store.getItem(k).then(function (data) {
+    var records = JSON.parse(this.store.getItem(k) || "{}");
 
-      var records = JSON.parse(data);
+    if (records && records[key]) {
+      return callback(null, records[key]);
+    }
 
-      if (records && records[key]) {
-        return callback(null, records[key]);
-      }
+    return callback(null, undefined);
 
-      return callback(null, undefined);
-    });
   };
 
   /**
@@ -100,11 +76,7 @@ AWS.CognitoSyncManager.StoreLocalStorage = (function () {
       return callback(new Error('You must provide an identity id and dataset name.'), null);
     }
 
-    return callback(null, JSON.parse(
-      isPromise(this.store.getItem(k))
-        ? parseFallback
-        : this.store.getItem(k)
-    ));
+    return callback(null, JSON.parse(this.store.getItem(k) || "{}"));
 
   };
 
@@ -120,23 +92,20 @@ AWS.CognitoSyncManager.StoreLocalStorage = (function () {
   CognitoSyncStoreLocalStorage.prototype.set = function (identityId, datasetName, key, value, callback) {
 
     var k = this.makeKey(identityId, datasetName);
-    var localStorage = this.store;
 
-    return this.store.getItem(k).then(function (data) {
+    var records = JSON.parse(this.store.getItem(k) || "{}");
+    if (!records) {
+      records = {};
+    }
 
-      var records = JSON.parse(data);
+    records[key] = value;
 
-      if (!records) {
-        records = {};
-      }
+    this.store.setItem(k, JSON.stringify(records));
 
-      records[key] = value;
+    callback(null, records);
 
-      localStorage.setItem(k, JSON.stringify(records));
+    return this;
 
-      callback(null, records);
-      return this;
-    });
   };
 
   /**
@@ -169,12 +138,7 @@ AWS.CognitoSyncManager.StoreLocalStorage = (function () {
 
     var k = this.makeKey(identityId, datasetName);
 
-    var records = JSON.parse(
-      isPromise(this.store.getItem(k))
-        ? parseFallback
-        : this.store.getItem(k)
-    );
-
+    var records = JSON.parse(this.store.getItem(k) || "{}");
     if (!records) {
       records = {};
     }
