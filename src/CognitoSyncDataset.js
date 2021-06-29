@@ -1,12 +1,5 @@
 // Copyright 2014 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
-const XRayLogger = require("@applicaster/quick-brick-xray");
-
-const XRayLogs = new XRayLogger(
-    "plugin",
-    "applicaster/amazon-cognito-js"
-);
-
 AWS = AWS || {};
 AWS.CognitoSyncManager = AWS.CognitoSyncManager || {};
 
@@ -408,29 +401,22 @@ AWS.CognitoSyncManager.Dataset = (function () {
                                         root.logger('No conflicts. Updating local records.');
 
                                         root.local.putRecords(root.getIdentityId(), root.datasetName, updatedRemoteRecords, function (err) {
-                                            XRayLogs.debug({
-                                                message: "putRecords: callback",
-                                                data: {
-                                                    error: err,
-                                                    root: root,
-                                                    updatedRemoteRecords: updatedRemoteRecords
-                                                }
-                                            });
+                                            root.logger('putRecords: callback', JSON.stringify({
+                                                error: err,
+                                                root: root,
+                                                updatedRemoteRecords: updatedRemoteRecords
+                                            }));
 
                                             if (err) { return callback.onFailure(err); }
 
                                             // Update the local sync count to match.
 
                                             root.local.updateLastSyncCount(root.getIdentityId(), root.datasetName, lastSyncCount, function (err) {
-
-                                                XRayLogs.debug({
-                                                    message: "updateLastSyncCount: callback",
-                                                    data: {
-                                                        error: err,
-                                                        root: root,
-                                                        lastSyncCount: lastSyncCount
-                                                    }
-                                                });
+                                                root.logger('updateLastSyncCount: callback', JSON.stringify({
+                                                    error: err,
+                                                    root: root,
+                                                    lastSyncCount: lastSyncCount
+                                                }));
 
                                                 if (err) { return callback.onFailure(err); }
 
