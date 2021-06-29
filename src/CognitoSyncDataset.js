@@ -1,10 +1,16 @@
 // Copyright 2014 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+const XRayLogger = require("@applicaster/quick-brick-xray");
+
+const XRayLogs = new XRayLogger(
+    "plugin",
+    "applicaster/amazon-cognito-js"
+);
 
 AWS = AWS || {};
 AWS.CognitoSyncManager = AWS.CognitoSyncManager || {};
 
-AWS.CognitoSyncManager.Dataset = (function() {
+AWS.CognitoSyncManager.Dataset = (function () {
 
     /**
      * Constructs a new dataset class.
@@ -16,7 +22,7 @@ AWS.CognitoSyncManager.Dataset = (function() {
      * @constructor
      */
 
-    var CognitoSyncDataset = function(datasetName, provider, local, remote, logger) {
+    var CognitoSyncDataset = function (datasetName, provider, local, remote, logger) {
 
         this.MAX_RETRY = 3;
 
@@ -24,7 +30,7 @@ AWS.CognitoSyncManager.Dataset = (function() {
         this.provider = provider;
         this.local = local;
         this.remote = remote;
-        this.logger = logger || function(){};
+        this.logger = logger || function () { };
 
     };
 
@@ -34,7 +40,7 @@ AWS.CognitoSyncManager.Dataset = (function() {
      * @returns {boolean}
      */
 
-    CognitoSyncDataset.prototype.validateKey = function(key) {
+    CognitoSyncDataset.prototype.validateKey = function (key) {
         var namePattern = new RegExp('^[a-zA-Z0-9_.:-]{1,128}$');
         return namePattern.test(key);
     };
@@ -46,7 +52,7 @@ AWS.CognitoSyncManager.Dataset = (function() {
      * @param {function} callback Callback(Error, Record)
      */
 
-    CognitoSyncDataset.prototype.put = function(key, value, callback) {
+    CognitoSyncDataset.prototype.put = function (key, value, callback) {
         var valueType = typeof value;
         if (!this.validateKey(key)) { return callback(new Error('Invalid key.')); }
         if (valueType !== 'string') {
@@ -61,7 +67,7 @@ AWS.CognitoSyncManager.Dataset = (function() {
      * @param {function} callback Callback(Error, Record)
      */
 
-    CognitoSyncDataset.prototype.remove = function(key, callback) {
+    CognitoSyncDataset.prototype.remove = function (key, callback) {
         if (!this.validateKey(key)) { return callback(new Error('Invalid key.')); }
         this.local.putValue(this.getIdentityId(), this.datasetName, key, null, callback);
     };
@@ -72,7 +78,7 @@ AWS.CognitoSyncManager.Dataset = (function() {
      * @param {function} callback Callback(Error, Value)
      */
 
-    CognitoSyncDataset.prototype.get = function(key, callback) {
+    CognitoSyncDataset.prototype.get = function (key, callback) {
         if (!this.validateKey(key)) { return callback(new Error('Invalid key.')); }
         this.local.getValue(this.getIdentityId(), this.datasetName, key, callback);
     };
@@ -82,7 +88,7 @@ AWS.CognitoSyncManager.Dataset = (function() {
      * @param {function} callback Callback(Error, Records)
      */
 
-    CognitoSyncDataset.prototype.getAllRecords = function(callback) {
+    CognitoSyncDataset.prototype.getAllRecords = function (callback) {
         this.local.getRecords(this.getIdentityId(), this.datasetName, callback);
     };
 
@@ -91,9 +97,9 @@ AWS.CognitoSyncManager.Dataset = (function() {
      * @param callback
      */
 
-    CognitoSyncDataset.prototype.getDataStorage = function(callback) {
+    CognitoSyncDataset.prototype.getDataStorage = function (callback) {
 
-        this.getDatasetMetadata(function(err, meta) {
+        this.getDatasetMetadata(function (err, meta) {
             if (err) { return callback(err); }
             if (!meta) { return callback(null, 0); }
             return callback(null, meta.getDataStorage());
@@ -107,9 +113,9 @@ AWS.CognitoSyncManager.Dataset = (function() {
      * @param callback
      */
 
-    CognitoSyncDataset.prototype.isChanged = function(key, callback) {
+    CognitoSyncDataset.prototype.isChanged = function (key, callback) {
         if (!this.validateKey(key)) { return callback(new Error('Invalid key.')); }
-        this.local.getRecord(this.getIdentityId(), this.datasetName, key, function(err, record) {
+        this.local.getRecord(this.getIdentityId(), this.datasetName, key, function (err, record) {
             callback(null, (record && record.isModified()));
         });
     };
@@ -119,7 +125,7 @@ AWS.CognitoSyncManager.Dataset = (function() {
      * @param callback
      */
 
-    CognitoSyncDataset.prototype.getDatasetMetadata = function(callback) {
+    CognitoSyncDataset.prototype.getDatasetMetadata = function (callback) {
         this.local.getDatasetMetadata(this.getIdentityId(), this.datasetName, callback);
     };
 
@@ -129,7 +135,7 @@ AWS.CognitoSyncManager.Dataset = (function() {
      * @param callback
      */
 
-    CognitoSyncDataset.prototype.resolve = function(resolvedRecords, callback) {
+    CognitoSyncDataset.prototype.resolve = function (resolvedRecords, callback) {
         this.local.putRecords(this.getIdentityId(), this.datasetName, resolvedRecords, callback);
     };
 
@@ -140,7 +146,7 @@ AWS.CognitoSyncManager.Dataset = (function() {
      * @returns {*}
      */
 
-    CognitoSyncDataset.prototype.putAll = function(values, callback) {
+    CognitoSyncDataset.prototype.putAll = function (values, callback) {
 
         var isValid = true;
 
@@ -161,12 +167,12 @@ AWS.CognitoSyncManager.Dataset = (function() {
      * @param callback
      */
 
-    CognitoSyncDataset.prototype.getAll = function(callback) {
+    CognitoSyncDataset.prototype.getAll = function (callback) {
 
         var map = {};
         var record;
 
-        this.local.getRecords(this.getIdentityId(), this.datasetName, function(err, records) {
+        this.local.getRecords(this.getIdentityId(), this.datasetName, function (err, records) {
 
             if (err) { return callback(err); }
 
@@ -188,7 +194,7 @@ AWS.CognitoSyncManager.Dataset = (function() {
      * @returns {string};
      */
 
-    CognitoSyncDataset.prototype.getIdentityId = function() {
+    CognitoSyncDataset.prototype.getIdentityId = function () {
         return this.provider.identityId;
     };
 
@@ -197,7 +203,7 @@ AWS.CognitoSyncManager.Dataset = (function() {
      * @param callback
      */
 
-    CognitoSyncDataset.prototype.getModifiedRecords = function(callback) {
+    CognitoSyncDataset.prototype.getModifiedRecords = function (callback) {
         this.local.getModifiedRecords(this.getIdentityId(), this.datasetName, callback);
     };
 
@@ -206,13 +212,13 @@ AWS.CognitoSyncManager.Dataset = (function() {
      * @param callback
      */
 
-    CognitoSyncDataset.prototype.getLocalMergedDatasets = function(callback) {
+    CognitoSyncDataset.prototype.getLocalMergedDatasets = function (callback) {
 
         var mergedDatasets = [];
         var prefix = this.datasetName + '.';
         var dataset;
 
-        this.local.getDatasets(this.getIdentityId(), function(err, datasets) {
+        this.local.getDatasets(this.getIdentityId(), function (err, datasets) {
 
             for (var d in datasets) {
                 if (datasets.hasOwnProperty(d)) {
@@ -238,17 +244,17 @@ AWS.CognitoSyncManager.Dataset = (function() {
      * @param retry
      */
 
-    CognitoSyncDataset.prototype.synchronize = function(callback, retry) {
+    CognitoSyncDataset.prototype.synchronize = function (callback, retry) {
 
         var root = this;
 
         // Validate callback object.
         callback = callback || {};
-        callback.onSuccess = callback.onSuccess || function(dataset, updates) {};
-        callback.onFailure = callback.onFailure || function(err) {};
-        callback.onConflict = callback.onConflict || function(dataset, conflicts, callback) { return callback(false); };
-        callback.onDatasetDeleted = callback.onDatasetDeleted || function(dataset, deletedDataset, callback) { return callback(false); };
-        callback.onDatasetsMerged = callback.onDatasetsMerged || function(dataset, merges, callback) { return callback(false); };
+        callback.onSuccess = callback.onSuccess || function (dataset, updates) { };
+        callback.onFailure = callback.onFailure || function (err) { };
+        callback.onConflict = callback.onConflict || function (dataset, conflicts, callback) { return callback(false); };
+        callback.onDatasetDeleted = callback.onDatasetDeleted || function (dataset, deletedDataset, callback) { return callback(false); };
+        callback.onDatasetsMerged = callback.onDatasetsMerged || function (dataset, merges, callback) { return callback(false); };
 
         // Validate/initialize retry count.
         if (retry === undefined) { retry = this.MAX_RETRY; }
@@ -261,7 +267,7 @@ AWS.CognitoSyncManager.Dataset = (function() {
 
         // First check if any datasets have been merged locally.
 
-        this.getLocalMergedDatasets(function(err, mergedDatasets) {
+        this.getLocalMergedDatasets(function (err, mergedDatasets) {
 
             if (err) { callback.onFailure(err); }
 
@@ -272,7 +278,7 @@ AWS.CognitoSyncManager.Dataset = (function() {
 
                 root.logger('Deferring to .onDatasetsMerged.');
 
-                return callback.onDatasetsMerged(root, mergedDatasets, function(isContinue) {
+                return callback.onDatasetsMerged(root, mergedDatasets, function (isContinue) {
 
                     if (!isContinue) {
 
@@ -292,7 +298,7 @@ AWS.CognitoSyncManager.Dataset = (function() {
 
                 // Get the last sync count so we can tell the server what to diff.
 
-                root.local.getLastSyncCount(root.getIdentityId(), root.datasetName, function(err, syncCount) {
+                root.local.getLastSyncCount(root.getIdentityId(), root.datasetName, function (err, syncCount) {
 
                     if (err) { return callback.onFailure(err); }
 
@@ -301,11 +307,11 @@ AWS.CognitoSyncManager.Dataset = (function() {
                     if (parseInt(syncCount) === -1) {
 
                         // Dataset has been deleted locally
-                        root.remote.deleteDataset(root.datasetName, function(err, data) {
+                        root.remote.deleteDataset(root.datasetName, function (err, data) {
                             if (err) { return callback.onFailure(err); }
-                            root.local.purgeDataset(root.getIdentityId(), root.datasetName, function(err) {
-                               if (err) { return callback.onFailure(err); }
-                               return callback.onSuccess(root);
+                            root.local.purgeDataset(root.getIdentityId(), root.datasetName, function (err) {
+                                if (err) { return callback.onFailure(err); }
+                                return callback.onSuccess(root);
                             });
                         });
 
@@ -313,7 +319,7 @@ AWS.CognitoSyncManager.Dataset = (function() {
 
                         // Get all the remote records that have changed since the latest sync count.
 
-                        root.remote.listUpdates(root.datasetName, syncCount, function(err, remoteRecords) {
+                        root.remote.listUpdates(root.datasetName, syncCount, function (err, remoteRecords) {
 
                             if (err) { return callback.onFailure(err); }
 
@@ -328,7 +334,7 @@ AWS.CognitoSyncManager.Dataset = (function() {
                                 root.logger('Deferring to .onDatasetsMerged.');
 
                                 // Merged datasets exist. Use callback to determine action.
-                                return callback.onDatasetsMerged(root, mergedNameList, function(doContinue) {
+                                return callback.onDatasetsMerged(root, mergedNameList, function (doContinue) {
                                     if (!doContinue) { callback.onFailure(new Error('Cancelled due to .onDatasetsMerged result.')); }
                                     else { root._synchronizeInternal(callback, --retry); }
                                 });
@@ -338,13 +344,13 @@ AWS.CognitoSyncManager.Dataset = (function() {
 
                             if (syncCount !== 0 && !remoteRecords || remoteRecords.isDeleted()) {
 
-                                return callback.onDatasetDeleted(root, remoteRecords.getDatasetName(), function(doContinue) {
+                                return callback.onDatasetDeleted(root, remoteRecords.getDatasetName(), function (doContinue) {
 
                                     root.logger('Dataset should be deleted. Deferring to .onDatasetDeleted.');
 
                                     if (doContinue) {
                                         root.logger('.onDatasetDeleted returned true, purging dataset locally.');
-                                        return root.local.purgeDataset(root.getIdentityId(), root.datasetName, function(err) {
+                                        return root.local.purgeDataset(root.getIdentityId(), root.datasetName, function (err) {
                                             if (err) { return callback.onFailure(err); }
                                             return root._synchronizeInternal(callback, --retry);
                                         });
@@ -367,7 +373,7 @@ AWS.CognitoSyncManager.Dataset = (function() {
 
                             if (updatedRemoteRecords.length > 0) {
 
-                                root._synchronizeResolveLocal(updatedRemoteRecords, function(err, conflicts) {
+                                root._synchronizeResolveLocal(updatedRemoteRecords, function (err, conflicts) {
 
                                     if (err) { return callback.onFailure(err); }
 
@@ -377,7 +383,7 @@ AWS.CognitoSyncManager.Dataset = (function() {
 
                                         root.logger('Conflicts detected. Deferring to .onConflict.');
 
-                                        callback.onConflict(root, conflicts, function(isContinue) {
+                                        callback.onConflict(root, conflicts, function (isContinue) {
 
                                             if (!isContinue) {
 
@@ -388,7 +394,7 @@ AWS.CognitoSyncManager.Dataset = (function() {
 
                                                 // Update remote records or we will just hit another sync conflict next go around.
 
-                                                root._synchronizePushRemote(sessionToken, syncCount, function(){
+                                                root._synchronizePushRemote(sessionToken, syncCount, function () {
                                                     return root.synchronize(callback, --retry);
                                                 });
 
@@ -401,13 +407,30 @@ AWS.CognitoSyncManager.Dataset = (function() {
                                         // No conflicts, update local records.
                                         root.logger('No conflicts. Updating local records.');
 
-                                        root.local.putRecords(root.getIdentityId(), root.datasetName, updatedRemoteRecords, function(err) {
+                                        root.local.putRecords(root.getIdentityId(), root.datasetName, updatedRemoteRecords, function (err) {
+                                            XRayLogs.debug({
+                                                message: "putRecords: callback",
+                                                data: {
+                                                    error: err,
+                                                    root: root,
+                                                    updatedRemoteRecords: updatedRemoteRecords
+                                                }
+                                            });
 
                                             if (err) { return callback.onFailure(err); }
 
                                             // Update the local sync count to match.
 
-                                            root.local.updateLastSyncCount(root.getIdentityId(), root.datasetName, lastSyncCount, function(err) {
+                                            root.local.updateLastSyncCount(root.getIdentityId(), root.datasetName, lastSyncCount, function (err) {
+
+                                                XRayLogs.debug({
+                                                    message: "updateLastSyncCount: callback",
+                                                    data: {
+                                                        error: err,
+                                                        root: root,
+                                                        lastSyncCount: lastSyncCount
+                                                    }
+                                                });
 
                                                 if (err) { return callback.onFailure(err); }
 
@@ -429,7 +452,7 @@ AWS.CognitoSyncManager.Dataset = (function() {
                                 // Nothing updated remotely. Push local changes to remote.
                                 root.logger('Nothing updated remotely. Pushing local changes to remote.');
 
-                                root._synchronizePushRemote(sessionToken, lastSyncCount, function(err) {
+                                root._synchronizePushRemote(sessionToken, lastSyncCount, function (err) {
 
                                     if (err) {
                                         root.logger('Remote push failed. Likely concurrent sync conflict. Retrying...');
@@ -460,7 +483,7 @@ AWS.CognitoSyncManager.Dataset = (function() {
      * @private
      */
 
-    CognitoSyncDataset.prototype._synchronizeResolveLocal = function(remoteRecords, callback) {
+    CognitoSyncDataset.prototype._synchronizeResolveLocal = function (remoteRecords, callback) {
 
         // Step two of the synchronization flow.
         // The dataset exists remotely so we need to determine if there are any deletions or conflicts.
@@ -475,20 +498,20 @@ AWS.CognitoSyncManager.Dataset = (function() {
 
             // Get the local records so we can compare them to the remote records.
 
-            root.local.getRecords(root.getIdentityId(), root.datasetName, function(err, localRecords) {
+            root.local.getRecords(root.getIdentityId(), root.datasetName, function (err, localRecords) {
 
                 var localMap = {};
                 var i, key, local;
 
                 // Build a map of the local records array for easier key lookup.
 
-                for (i=0; i<localRecords.length; i++) {
+                for (i = 0; i < localRecords.length; i++) {
                     localMap[localRecords[i].getKey()] = localRecords[i];
                 }
 
                 // Compare local and remote records.
 
-                for (i=0; i<remoteRecords.length; i++) {
+                for (i = 0; i < remoteRecords.length; i++) {
 
                     key = remoteRecords[i].getKey();
                     local = localMap[key];
@@ -520,7 +543,7 @@ AWS.CognitoSyncManager.Dataset = (function() {
      * @private
      */
 
-    CognitoSyncDataset.prototype._synchronizePushRemote = function(sessionToken, syncCount, callback) {
+    CognitoSyncDataset.prototype._synchronizePushRemote = function (sessionToken, syncCount, callback) {
 
         // Step three of the synchronization flow.
         // The local dataset has modifications so we need to push the local changes to remote.
@@ -530,16 +553,16 @@ AWS.CognitoSyncManager.Dataset = (function() {
 
         // Push changes to remote.
 
-        this.getModifiedRecords(function(err, localChanges) {
+        this.getModifiedRecords(function (err, localChanges) {
 
             if (localChanges.length > 0) {
 
-                root.remote.putRecords(root.datasetName, localChanges, sessionToken, function(err, records) {
+                root.remote.putRecords(root.datasetName, localChanges, sessionToken, function (err, records) {
 
                     if (err) { callback(err); }
 
                     // Update local metadata.
-                    root.local.putRecords(root.getIdentityId(), root.datasetName, records, function(err) {
+                    root.local.putRecords(root.getIdentityId(), root.datasetName, records, function (err) {
 
                         if (err) { return callback(err); }
 
@@ -553,7 +576,7 @@ AWS.CognitoSyncManager.Dataset = (function() {
                             }
                         }
 
-                        root.local.updateLastSyncCount(root.getIdentityId(), root.datasetName, newSyncCount, function(err) {
+                        root.local.updateLastSyncCount(root.getIdentityId(), root.datasetName, newSyncCount, function (err) {
                             if (err) { return callback(err); }
                             return callback(null, true);
                         });
