@@ -401,16 +401,22 @@ AWS.CognitoSyncManager.Dataset = (function () {
                                         root.logger('No conflicts. Updating local records.');
 
                                         root.local.putRecords(root.getIdentityId(), root.datasetName, updatedRemoteRecords, function (err) {
-                                            root.logger('putRecords: callback: error ' + Boolean(err) && err.message);
+                                            root.logger('putRecords: callback: error ' + Boolean(err));
 
-                                            if (err) { return callback.onFailure(err); }
+                                            if (err) {
+                                                root.logger('putRecords: callback: error message' + err);
+                                                return callback.onFailure(err); 
+                                            }
 
                                             // Update the local sync count to match.
 
                                             root.local.updateLastSyncCount(root.getIdentityId(), root.datasetName, lastSyncCount, function (err) {
-                                                root.logger('updateLastSyncCount: callback: error ' + Boolean(err) && err.message);
+                                                root.logger('updateLastSyncCount: callback: error ' + Boolean(err));
 
-                                                if (err) { return callback.onFailure(err); }
+                                                if (err) {
+                                                    root.logger('updateLastSyncCount: callback: error message' + err);
+                                                    return callback.onFailure(err); 
+                                                }
 
                                                 root.logger('Finished resolving records. Restarting sync.');
 
