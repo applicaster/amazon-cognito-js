@@ -424,7 +424,7 @@ AWS.CognitoSyncManager.Dataset = (function () {
                                                 return root.synchronize(callback, --retry);
 
                                             });
-                                        }, root.logger);
+                                        });
 
                                     }
 
