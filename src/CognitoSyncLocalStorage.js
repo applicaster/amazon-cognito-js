@@ -457,7 +457,7 @@ AWS.CognitoSyncManager.LocalStorage = (function() {
      * @returns {CognitoSyncLocalStorage}
      */
 
-    CognitoSyncLocalStorage.prototype.putRecords = function (identityId, datasetName, records, callback) {
+    CognitoSyncLocalStorage.prototype.putRecords = function (identityId, datasetName, records, callback, logger) {
 
         var root = this;
         records = records || [];
@@ -468,13 +468,15 @@ AWS.CognitoSyncManager.LocalStorage = (function() {
             if (records.length > 0) {
 
                 root.updateAndClearRecord(identityId, datasetName, records.shift(), function (err) {
-
+                    if (logger) {
+                        logger("handleSyng:putRecords:refresh:updateAndClearRecord: ", + err)
+                    }
                     if (err) { return callback(err); }
                     if (records.length === 0) { return callback(null, true); }
 
                     request();
 
-                });
+                }, logger);
 
             }
 
@@ -686,8 +688,11 @@ AWS.CognitoSyncManager.LocalStorage = (function() {
      * @param callback
      */
 
-    CognitoSyncLocalStorage.prototype.updateAndClearRecord = function (identityId, datasetName, record, callback) {
+    CognitoSyncLocalStorage.prototype.updateAndClearRecord = function (identityId, datasetName, record, callback, logger) {
         this.store.set(identityId, datasetName, record.getKey(), record.toJSON(), function (err) {
+            if (logger && err) {
+                logger("handleSync:putRecords:refresh:updateAndClearRecord:set: ", + err + " " + record.getKey())
+            }
             if (err) { return callback(err); }
             return callback(null, true);
         });

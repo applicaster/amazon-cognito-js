@@ -2,7 +2,7 @@
   "name": "@applicaster/amazon-cognito-js",
   "description": "Cognito Sync Manager for AWS JavaScript SDK",
   "main": "./dist/amazon-cognito.min.js",
-  "version": "1.1.9",
+  "version": "1.2.0",
   "author": {
     "name": "Amazon Web Services",
     "email": "aws@amazon.com",
