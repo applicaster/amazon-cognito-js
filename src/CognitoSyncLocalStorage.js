@@ -4,7 +4,7 @@
 AWS = AWS || {};
 AWS.CognitoSyncManager = AWS.CognitoSyncManager || {};
 
-AWS.CognitoSyncManager.LocalStorage = (function() {
+AWS.CognitoSyncManager.LocalStorage = (function () {
 
     /**
      * Constructs a new local storage class.
@@ -463,27 +463,17 @@ AWS.CognitoSyncManager.LocalStorage = (function() {
         records = records || [];
         records = records.slice();
 
-        var request = function () {
-
+        for (var i = 0; i < records.length; i++) {
             if (records.length > 0) {
-
-                root.updateAndClearRecord(identityId, datasetName, records.shift(), function (err) {
-                    if (logger) {
-                        logger("handleSyng:putRecords:refresh:updateAndClearRecord: ", + err)
-                    }
+                root.updateAndClearRecord(identityId, datasetName, records[i], function (err) {
                     if (err) { return callback(err); }
-                    if (records.length === 0) { return callback(null, true); }
-
-                    request();
-
                 }, logger);
-
             }
+        }
 
-        };
+        logger("putRecords:loop-end")
 
-        request();
-
+        return callback(null, true);
     };
 
     /**
@@ -540,7 +530,7 @@ AWS.CognitoSyncManager.LocalStorage = (function() {
             if (err) { callback(err); }
 
             // Delete metadata.
-            delete(root.meta[root.getMetadataKey(identityId, datasetName)]);
+            delete (root.meta[root.getMetadataKey(identityId, datasetName)]);
 
             // Save metadata.
             root.saveMetadataCache(identityId, root.meta, callback);
@@ -691,7 +681,7 @@ AWS.CognitoSyncManager.LocalStorage = (function() {
     CognitoSyncLocalStorage.prototype.updateAndClearRecord = function (identityId, datasetName, record, callback, logger) {
         this.store.set(identityId, datasetName, record.getKey(), record.toJSON(), function (err) {
             if (logger && err) {
-                logger("handleSync:putRecords:refresh:updateAndClearRecord:set: ", + err + " " + record.getKey())
+                logger("updateAndClearRecord:set: ", + err + " " + record.getKey())
             }
             if (err) { return callback(err); }
             return callback(null, true);
